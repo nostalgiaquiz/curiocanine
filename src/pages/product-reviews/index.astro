@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import AffiliateNotice from '../../components/AffiliateNotice.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+
+const reviews = (await getCollection('reviews', (r) => !r.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="Product Reviews" description="Product reviews for dog training and enrichment, with clear affiliate disclosure.">
+  <div class="container page">
+    <Breadcrumbs items={[{ label: 'Product Reviews' }]} />
+    <h1>Product Reviews</h1>
+    <p class="lede">Reviews of dog training and enrichment products, with clear disclosure of how we may earn money.</p>
+    <AffiliateNotice />
+    {reviews.length > 0 ? (
+      <ul class="article-list">
+        {reviews.map((r) => <ArticleCard title={r.data.title} description={r.data.description} href={`/product-reviews/${r.id}/`} date={r.data.pubDate} />)}
+      </ul>
+    ) : (
+      <div class="empty"><p>No reviews have been published yet.</p></div>
+    )}
+  </div>
+</BaseLayout>

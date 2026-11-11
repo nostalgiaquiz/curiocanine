@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { site } from '../config/site';
+---
+
+<BaseLayout title="About" description="About CurioCanine: an independent website about positive dog training, brain games and dog enrichment.">
+  <div class="container page prose">
+    <Breadcrumbs items={[{ label: 'About' }]} />
+    <h1>About {site.name}</h1>
+    <p class="lede">{site.name} is a website about positive dog training, brain games and everyday enrichment for dogs.</p>
+    <h2>What we do</h2>
+    <p>We publish practical, reward-based ideas for dog owners, plus a free <a href="/enrichment-planner/">Dog Enrichment Planner</a>. Our goal is to make it easier to give your dog interesting things to do.</p>
+    <h2>How the site is funded</h2>
+    <p>The site may earn commissions from affiliate links in product reviews. Read the <a href="/affiliate-disclosure/">Affiliate Disclosure</a> for details. We do not sell merchandise or subscriptions.</p>
+    <h2>What we are not</h2>
+    <p>We are not a veterinary service. Nothing here is veterinary or medical advice, and nothing here replaces help from a veterinarian or qualified professional trainer.</p>
+    <h2>Contact</h2>
+    <p>Questions or corrections are welcome. See the <a href="/contact/">Contact page</a>.</p>
+  </div>
+</BaseLayout>

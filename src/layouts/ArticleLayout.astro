@@ -1,0 +1,42 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import AffiliateNotice from '../components/AffiliateNotice.astro';
+import { site } from '../config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  noindex?: boolean;
+  isReview?: boolean;
+  crumbs: { label: string; href?: string }[];
+}
+const { title, description, pubDate, updatedDate, noindex, isReview = false, crumbs } = Astro.props;
+
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  datePublished: pubDate.toISOString(),
+  dateModified: (updatedDate ?? pubDate).toISOString(),
+  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).href,
+  publisher: { '@type': 'Organization', name: site.name },
+};
+---
+
+<BaseLayout title={title} description={description} noindex={noindex} type="article" jsonLd={jsonLd}>
+  <article class="container page">
+    <Breadcrumbs items={crumbs} />
+    <h1>{title}</h1>
+    <p class="article-meta">
+      Published <time datetime={pubDate.toISOString()}>{fmt(pubDate)}</time>
+      {updatedDate && <> &middot; Updated <time datetime={updatedDate.toISOString()}>{fmt(updatedDate)}</time></>}
+    </p>
+    {isReview && <AffiliateNotice />}
+    <div class="prose article-body"><slot /></div>
+  </article>
+</BaseLayout>

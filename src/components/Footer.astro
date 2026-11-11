@@ -1,0 +1,23 @@
+---
+import { site, footerNav } from '../config/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <nav aria-label="Footer">
+      <ul class="footer-nav">
+        {footerNav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+    <p>
+      Some links on this site may be affiliate links, which means we may earn a commission if you buy through them.
+      See our <a href="/affiliate-disclosure/">Affiliate Disclosure</a>.
+    </p>
+    <p>
+      The information on {site.name} is general and educational. It is not veterinary advice. If your dog has a
+      health or serious behavior problem, please talk to a veterinarian or a qualified professional.
+    </p>
+    <p>&copy; {year} {site.name}</p>
+  </div>
+</footer>
