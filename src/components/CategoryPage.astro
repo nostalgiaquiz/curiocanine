@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import ArticleCard from './ArticleCard.astro';
+import type { CategoryKey } from '../config/site';
+
+interface Props { title: string; description: string; category: CategoryKey }
+const { title, description, category } = Astro.props;
+
+const posts = (await getCollection('articles', (p) => !p.data.draft && p.data.category === category))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container page">
+    <Breadcrumbs items={[{ label: title }]} />
+    <h1>{title}</h1>
+    <div class="prose"><slot /></div>
+
+    <h2>Articles</h2>
+    {posts.length > 0 ? (
+      <ul class="article-list">
+        {posts.map((p) => <ArticleCard title={p.data.title} description={p.data.description} href={`/guides/${p.id}/`} date={p.data.pubDate} />)}
+      </ul>
+    ) : (
+      <div class="empty">
+        <p>No articles here yet. We are preparing original guides for this topic.</p>
+        <p>In the meantime, try the free <a href="/enrichment-planner/">Dog Enrichment Planner</a>.</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

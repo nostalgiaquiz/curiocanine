@@ -1,0 +1,15 @@
+---
+import { site } from '../config/site';
+
+interface Props { label: string }
+const { label } = Astro.props;
+const url = site.affiliateUrl.trim();
+const valid = url.startsWith('https://');
+---
+
+{valid && (
+  <p>
+    <a class="btn" href={url} rel="sponsored nofollow noopener" target="_blank">{label}</a>
+    <span class="muted"> Affiliate link, opens in a new tab.</span>
+  </p>
+)}

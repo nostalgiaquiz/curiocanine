@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { activities } from '../data/enrichment-activities';
+
+const payload = JSON.stringify(activities).replace(/</g, '\\u003c');
+---
+
+<BaseLayout
+  title="Free Dog Enrichment Planner"
+  description="A free, private dog enrichment planner. Answer a few questions and get a simple one-week plan of sniffing, food, training and calm activities."
+>
+  <div class="container page">
+    <Breadcrumbs items={[{ label: 'Dog Enrichment Planner' }]} />
+    <h1>Dog Enrichment Planner</h1>
+    <p class="lede">Answer a few questions to get a simple one-week plan. It is free, and your answers stay in your browser.</p>
+
+    <noscript><p class="callout">This planner needs JavaScript. Please turn it on in your browser to use it.</p></noscript>
+
+    <form id="planner" class="planner-form">
+      <fieldset>
+        <legend>Your dog’s life stage</legend>
+        <label><input type="radio" name="stage" value="puppy" /> Puppy</label>
+        <label><input type="radio" name="stage" value="adult" checked /> Adult</label>
+        <label><input type="radio" name="stage" value="senior" /> Senior</label>
+      </fieldset>
+      <fieldset>
+        <legend>Energy level</legend>
+        <label><input type="radio" name="energy" value="low" /> Low</label>
+        <label><input type="radio" name="energy" value="medium" checked /> Medium</label>
+        <label><input type="radio" name="energy" value="high" /> High</label>
+      </fieldset>
+      <fieldset>
+        <legend>Space you have</legend>
+        <label><input type="radio" name="space" value="small" /> Small (flat or small room)</label>
+        <label><input type="radio" name="space" value="medium" checked /> Medium (house)</label>
+        <label><input type="radio" name="space" value="large" /> Large (garden or yard)</label>
+      </fieldset>
+      <fieldset>
+        <legend>Time per day</legend>
+        <label><input type="radio" name="minutes" value="15" /> About 15 minutes</label>
+        <label><input type="radio" name="minutes" value="30" checked /> About 30 minutes</label>
+        <label><input type="radio" name="minutes" value="45" /> About 45 minutes</label>
+        <label><input type="radio" name="minutes" value="60" /> About 60 minutes</label>
+      </fieldset>
+      <fieldset>
+        <legend>Activity types to include (choose any)</legend>
+        <label><input type="checkbox" name="kind" value="sniff" checked /> Sniffing</label>
+        <label><input type="checkbox" name="kind" value="food" checked /> Food puzzles</label>
+        <label><input type="checkbox" name="kind" value="chew" checked /> Chewing</label>
+        <label><input type="checkbox" name="kind" value="training" checked /> Training games</label>
+        <label><input type="checkbox" name="kind" value="movement" checked /> Active play</label>
+        <label><input type="checkbox" name="kind" value="calm" checked /> Calm time</label>
+      </fieldset>
+      <div class="btn-row">
+        <button class="btn" type="submit">Create my plan</button>
+      </div>
+    </form>
+
+    <div id="plan" class="plan" aria-live="polite" tabindex="-1"></div>
+
+    <div class="callout">
+      <p><strong>Safety first.</strong> Always supervise your dog with food toys, chews and new items. Count treats and food puzzles as part of your dog’s daily food. Ask your veterinarian what is right for your dog’s age, health and any special needs. If your dog shows pain, fear or distress, stop.</p>
+    </div>
+
+    <script id="activity-data" type="application/json" set:html={payload} />
+  </div>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('planner');
+  const out = document.getElementById('plan');
+  const activities = JSON.parse(document.getElementById('activity-data').textContent || '[]');
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const kindLabel = { sniff: 'Sniffing', food: 'Food puzzle', chew: 'Chewing', training: 'Training game', movement: 'Active play', calm: 'Calm time' };
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function build(opts) {
+    const pool = activities.filter((a) =>
+      a.stages.includes(opts.stage) && a.energy.includes(opts.energy) &&
+      a.space.includes(opts.space) && opts.kinds.includes(a.kind));
+    if (pool.length === 0) return null;
+
+    const calm = pool.filter((a) => a.kind === 'calm' || a.kind === 'chew');
+    const plan = [];
+    let cursor = 0;
+    for (let d = 0; d < 7; d++) {
+      const items = [];
+      let used = 0;
+      const tryAdd = (a) => {
+        if (!a || items.includes(a)) return false;
+        if (items.length > 0 && used + a.minutes > opts.minutes) return false;
+        items.push(a); used += a.minutes; return true;
+      };
+      for (let i = 0; i < pool.length && items.length < 4; i++) {
+        const a = pool[(cursor + i) % pool.length];
+        if (a.kind === 'calm' || a.kind === 'chew') continue;
+        tryAdd(a);
+      }
+      cursor = (cursor + 2) % pool.length;
+      if (calm.length > 0 && !items.some((a) => a.kind === 'calm' || a.kind === 'chew')) {
+        const c = calm[d % calm.length];
+        if (used + c.minutes <= opts.minutes + 5) { items.push(c); used += c.minutes; }
+      }
+      plan.push({ day: days[d], items, used });
+    }
+    return plan;
+  }
+
+  function render(plan, opts) {
+    if (!plan) {
+      out.innerHTML = '<p class="empty">No activities match those choices. Try turning on more activity types or choosing a different space.</p>';
+      return;
+    }
+    const html = plan.map((p) => `
+      <section class="plan-day">
+        <h3>${p.day} <span class="tag">(about ${p.used} minutes)</span></h3>
+        <ul>${p.items.map((a) => `<li><strong>${esc(a.title)}</strong> <span class="tag">${esc(kindLabel[a.kind])}, about ${a.minutes} min</span><br>${esc(a.how)}<br><span class="tag">Safety: ${esc(a.safety)}</span></li>`).join('')}</ul>
+      </section>`).join('');
+    out.innerHTML = `<h2>Your one-week plan</h2>
+      <p class="muted">Based on: ${esc(opts.stage)}, ${esc(opts.energy)} energy, ${esc(opts.space)} space, about ${opts.minutes} minutes a day. Take rest days whenever your dog needs them.</p>
+      ${html}
+      <div class="btn-row no-print"><button class="btn btn-ghost" type="button" id="print-plan">Print this plan</button></div>`;
+    const btn = document.getElementById('print-plan');
+    if (btn) btn.addEventListener('click', () => window.print());
+    out.focus();
+  }
+
+  if (form && out) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const opts = {
+        stage: String(data.get('stage')),
+        energy: String(data.get('energy')),
+        space: String(data.get('space')),
+        minutes: Number(data.get('minutes')),
+        kinds: data.getAll('kind').map(String),
+      };
+      render(build(opts), opts);
+    });
+  }
+</script>
