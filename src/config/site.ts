@@ -14,7 +14,7 @@ export const site = {
   // The ClickBank affiliate link for Brain Training for Dogs.
   // Leave empty until you have your real affiliate link from ClickBank.
   // While empty, NO buy/visit button is shown anywhere on the site.
-  affiliateUrl: '',
+  affiliateUrl: 'https://d114083ixmet7saxy5jfz609vd.hop.clickbank.net/',
 
   // Date shown on the policy pages.
   policiesUpdated: 'November 11, 2026',
