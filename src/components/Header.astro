@@ -5,7 +5,8 @@ const path = Astro.url.pathname;
 const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 ---
 
-<header class="site-header">
+<div class="header-sentinel" data-header-sentinel aria-hidden="true"></div>
+<header class="site-header" data-site-header>
   <div class="container header-inner">
     <a class="brand" href="/"><span class="brand-dot" aria-hidden="true"></span>{site.name}</a>
 
@@ -29,3 +30,31 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
     </details>
   </div>
 </header>
+
+<script>
+  // Sticky header: adds "is-compact" once the page is scrolled, and publishes the header
+  // height (--header-h) so anchor links and keyboard focus are not hidden behind it.
+  // Without JavaScript the header stays sticky at full size.
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  const sentinel = document.querySelector<HTMLElement>('[data-header-sentinel]');
+
+  if (header && sentinel) {
+    const root = document.documentElement;
+    const publishHeight = () => root.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    publishHeight();
+    if ('ResizeObserver' in window) new ResizeObserver(publishHeight).observe(header);
+
+    if ('IntersectionObserver' in window) {
+      let ready = false;
+      new IntersectionObserver((entries) => {
+        const latest = entries[entries.length - 1];
+        header.classList.toggle('is-compact', !latest.isIntersecting);
+        if (!ready) {
+          ready = true;
+          // Two frames: let the first state render without a transition, then enable them.
+          requestAnimationFrame(() => requestAnimationFrame(() => header.classList.add('js-ready')));
+        }
+      }).observe(sentinel);
+    }
+  }
+</script>
