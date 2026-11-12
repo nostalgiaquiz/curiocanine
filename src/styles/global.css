@@ -323,3 +323,4 @@ img, svg { max-width: 100%; height: auto; }
   body { background: #fff; color: #000; font-size: 11pt; }
   .plan-day { border: 0; border-top: 1px solid #999; border-radius: 0; background: none; padding: 0.8rem 0; }
 }
+/* Trigger Cloudflare preview build */
